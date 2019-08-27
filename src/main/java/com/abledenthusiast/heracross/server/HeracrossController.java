@@ -47,7 +47,7 @@ public class HeracrossController {
             return false;
         }
         //TODO: move to the fileHandler. this will need to be more generic
-
+        library.createSeries(seriesName);
         return fileHandler.createDirectory(seriesName);
 
     }

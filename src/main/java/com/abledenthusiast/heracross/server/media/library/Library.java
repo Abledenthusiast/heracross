@@ -13,5 +13,7 @@ public interface Library <T extends MediaFile> {
     //public T get(String mediaName);
     public boolean contains(String mediaName);
 
+    public void createSeries(String seriesName);
+    
     public List<?> getEntireLibrary();
 }

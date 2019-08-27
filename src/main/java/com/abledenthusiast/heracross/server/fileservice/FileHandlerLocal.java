@@ -1,9 +1,11 @@
 package com.abledenthusiast.heracross.server.fileservice;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -11,7 +13,9 @@ import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile;
 import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile.MediaFileType;
@@ -19,14 +23,13 @@ import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile.Me
 import org.springframework.web.multipart.MultipartFile;
 
 public class FileHandlerLocal implements FileHandler<MultipartFile> {
-    private final static String MAP_FILE = "video_map.json";
+    private final static String LOG_FILE = "series.log";
     private Path defaultDir;
     private HashMap<String, String> hashMap;
 
-    public FileHandlerLocal(Path defaultPath) {
-        this.defaultDir = defaultPath;
+    public FileHandlerLocal(Path projectRoot) {
+        this.defaultDir = projectRoot;
         hashMap = new HashMap<>();
-        initDirectory(defaultPath);
     }
     
 
@@ -62,9 +65,13 @@ public class FileHandlerLocal implements FileHandler<MultipartFile> {
     //     return Paths.get(defaultDir, originalFileName);
     // } 
     
-    public void initDirectory(Path Path) {
+    public void initDirectory(Path dir) {
+        /*
+        *   check if the directory already exists
+        *   if it does, the library needs to be initialized
+        */
         try {
-            Files.createDirectories(Path);
+            Files.createDirectories(dir);
         } catch (Exception e) {
             System.out.printf("error when creating directory %s", e);
         }
@@ -89,14 +96,44 @@ public class FileHandlerLocal implements FileHandler<MultipartFile> {
     // }
 
 
-
-    public boolean createDirectory(String seriesName) {
+    @Override
+    public boolean createDirectory(Path directory) {
         try {
-            Files.createDirectories(defaultDir.resolve(seriesName));
+            Files.createDirectories(defaultDir.resolve(directory));
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return false;
     }
+
+    @Override
+    public boolean isDirectory(Path directory) {
+        return Files.isDirectory(directory);
+    }
+
+    @Override
+    public File getFile(Path directory) {
+        return directory.toFile();
+    }
+
+    public File[] getFiles(Path directory) {
+        //  @see Files.newDirectoryStream
+        return directory.toFile().listFiles();
+    }
+
+    @Override
+    public void writeLog(String logstr) throws IOException {
+        //this write method defaults to UTF-8
+        //FIXME: \n should be replaced with systen independent newline
+        byte[] toOut = (logstr + "\n").getBytes();
+        Files.write(defaultDir.resolve(LOG_FILE), toOut, StandardOpenOption.APPEND);
+    }
+
+    @Override
+    public Set<String> loadLog() throws IOException {
+        return Files.newBufferedReader(defaultDir.resolve(LOG_FILE)).lines()
+        .map(line -> line.strip())
+        .collect(Collectors.toSet());
+	}
+
 }

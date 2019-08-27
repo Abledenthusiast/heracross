@@ -13,9 +13,4 @@ public class HeracrossApplication {
     SpringApplication.run(HeracrossApplication.class, args);
   }
 
-  @GetMapping("/")
-  public String hello() {
-    return "Hello world!";
-  }
-
 }

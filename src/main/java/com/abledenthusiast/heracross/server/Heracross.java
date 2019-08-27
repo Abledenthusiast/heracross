@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.abledenthusiast.heracross.HeracrossProperties;
@@ -122,7 +123,7 @@ public class Heracross {
     }
 
     @GetMapping(value="/debug/getFile/all")
-     public void getfile(HttpServletResponse response) throws IOException {
+     public void getfile(HttpServletRequest request,HttpServletResponse response) throws IOException {
         try {
             OutputStream outStream = response.getOutputStream();
             response.setContentType("text/plain");
