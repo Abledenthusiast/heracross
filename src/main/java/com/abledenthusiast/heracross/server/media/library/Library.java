@@ -1,5 +1,6 @@
 package com.abledenthusiast.heracross.server.media.library;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -7,13 +8,16 @@ import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile;
 
 public interface Library <T extends MediaFile> {
     //public void add(T file);
-    public void addToSeries(T file, String seriesName);
+    void addToSeries(T file, String seriesName);
 
-    public Optional<T> getSeriesMember(String seriesName, int index);
+    Optional<T> getSeriesMember(String seriesName, int index);
     //public T get(String mediaName);
-    public boolean contains(String mediaName);
+    boolean contains(String mediaName);
 
-    public void createSeries(String seriesName);
+    void createSeries(MediaFile.MediaFileType fileType, String seriesName);
     
-    public List<?> getEntireLibrary();
+    List<?> getEntireLibrary();
+
+    Path constructSeriesPath(MediaFile.MediaFileType mediaType, String seriesName);
+
 }

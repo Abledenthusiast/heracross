@@ -46,10 +46,7 @@ public class HeracrossController {
         if(library.contains(seriesName)) {
             return false;
         }
-        //TODO: move to the fileHandler. this will need to be more generic
-        library.createSeries(seriesName);
-        return fileHandler.createDirectory(seriesName);
-
+        return createSeriesTV(seriesName);
     }
 
     public Path getSeriesMember(String seriesName, int index) {
@@ -64,7 +61,7 @@ public class HeracrossController {
 
     public <T extends MultipartFile> void addSeriesFile(T file, String seriesName, MediaFileType mediaType) {
         try {
-            MediaFile mediaFile = MediaFile.createMediaFile(projectRoot.resolve(seriesName), file.getOriginalFilename(), 
+            MediaFile mediaFile = MediaFile.createMediaFile(library.constructSeriesPath(mediaType, seriesName), file.getOriginalFilename(),
                                 file.getContentType(), mediaType);
             library.addToSeries(mediaFile, seriesName);
             Files.copy(file.getInputStream(), mediaFile.getFilePath(), StandardCopyOption.REPLACE_EXISTING);
@@ -73,6 +70,19 @@ public class HeracrossController {
             throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR,
                                                 "Error while adding file to library");
         }
+    }
+
+
+
+    /*
+     * creates a new directory for a series if the series does not already exist.
+     * this will normalize the seriesName to all lower case, so if ths is not the
+     * desired behavior, this should be extended in same way to handle that case.
+     */
+    public boolean createSeriesTV(String seriesName) {
+        //TODO: move to the fileHandler. this will need to be more generic
+        library.createSeries( MediaFileType.TVSeries, seriesName);
+        return true;
     }
 
 }

@@ -9,7 +9,9 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import com.abledenthusiast.heracross.server.fileservice.FileHandler;
 import com.abledenthusiast.heracross.server.media.library.libcollection.MediaCollection;
 import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile;
+import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile.MediaFileType;
 
+import javax.naming.OperationNotSupportedException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -39,7 +41,7 @@ public class MediaLibrary implements Library<MediaFile> {
 
     @Override
     public void addToSeries(MediaFile file, String seriesName) {
-        Path seriesDir = rootDirectory.resolve(seriesName);
+        Path seriesDir = constructSeriesPath(file.getMediaFileType(), seriesName);
         if(!Files.isDirectory(seriesDir)) {
             try {
                 Files.createDirectories(seriesDir);
@@ -49,18 +51,22 @@ public class MediaLibrary implements Library<MediaFile> {
 			}
         }
         System.out.printf("adding series %s", seriesName);
+        commitSeries(seriesName, seriesDir);
         library.addToSeries(seriesName, file);
     }
     
     public void addEntireSeries(String seriesName, List<? extends MediaFile> files) {
+        Path seriesDir = constructSeriesPath(files.get(0).getMediaFileType(), seriesName);
+        commitSeries(seriesName, seriesDir);
         for(MediaFile file : files) {
             library.addToSeries(seriesName, file);
         }
     }
 
     @Override
-    public void createSeries(String seriesName) {
-        createSeriesDir(seriesName);
+    public void createSeries(MediaFileType mediaType, String seriesName) {
+        createSeriesDir(constructSeriesPath(mediaType, seriesName));
+        library.createSeries(seriesName);
     }
 
     @Override
@@ -70,10 +76,6 @@ public class MediaLibrary implements Library<MediaFile> {
             return Optional.of(series.get(index));
         }
         return Optional.empty();
-    }
-
-    public void put(MediaFile media) {
-        library.put(media.getName(), media);
     }
 
 
@@ -113,31 +115,109 @@ public class MediaLibrary implements Library<MediaFile> {
         */
         if(fileHandler.isDirectory(rootDirectory)) {
             // traverse directory tree and add files to collection
-            new FileTree().loadFiles();
+            try {
+                loadFromLog();
+            } catch (IOException | OperationNotSupportedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
-    private void createSeriesDir(String seriesName) {
-        fileHandler.createDirectory(rootDirectory.resolve(seriesName));
+    private void createSeriesDir(Path seriesPath) {
+        fileHandler.createDirectory(seriesPath);
     }
 
-    final private class FileTree {
+    @Override
+    public Path constructSeriesPath(MediaFileType mediaType, String seriesName) {
+        return rootDirectory.resolve(Path.of(mediaType.getDirName(), seriesName));
+    }
 
-        public void loadFiles() {
-            Set<String> seriesLog = fileHandler.loadLog();
-            File cur = fileHandler.getFile(rootDirectory);
-            Deque<File> queue = new ArrayDeque<>(); 
+    public void initMediaTypeDirs() {
+        for(MediaFileType mfileType: MediaFileType.values()) {
+            fileHandler.createDirectory(rootDirectory.resolve(mfileType.getDirName()));
+        }
+    }
 
-            // -------------------------------
+    private void commitToLog(MediaFile file) {}
 
-            queue.add(cur);
-            while(!queue.isEmpty()) {
-                if(fileHandler.isDirectory(cur.toPath())) {
-                    File[] files = fileHandler.getFiles(cur.toPath());
-                    for(File file : files) {
-                        queue.add(file);
-                    }
+    private void commitSeries(String seriesName, Path seriesPath) {
+        try {
+            fileHandler.writeLog(seriesName + ":" + seriesPath.toString());
+        } catch(Exception err) {
+
+        }
+    }
+
+
+
+    /*
+    * This portion should rectify the commit log, library collections and the actual underlying file store
+    *
+    *
+    *
+    *
+     */
+    public void loadFromLog() throws IOException, OperationNotSupportedException {
+
+        Set<String> commitLog = fileHandler.loadLog();
+        File cur = fileHandler.getFile(rootDirectory);
+        Deque<File> queue = new ArrayDeque<>();
+
+        for (String line : commitLog) {
+            /* construct mediaFile from commitlog:
+            *   Tuple string will have the structure of: FILE_PATH:NAME:CONTENT_TYPE:MEDIA_FILE_TYPE:SERIES_NAME
+            */
+
+            String[] logTuple = line.split(":");
+            Path filePath = Path.of(logTuple[0]);
+            String fileName = logTuple[1];
+            String contentType = logTuple[2];
+            MediaFileType mediaType = MediaFileType.valueOf(logTuple[3]);
+            String seriesName = logTuple[4];
+
+            MediaFile mediaFile = MediaFile.createMediaFile(filePath, fileName,
+                    contentType, mediaType);
+
+            if(!seriesName.equals("")) {
+                library.addToSeries(seriesName, mediaFile);
+            } else {
+                library.addSingle(mediaFile);
+            }
+
+        }
+
+        // -------------------------------
+
+    }
+
+
+    /*private void rectifyCommitLog() throws IOException {
+
+        Set<String> seriesLog = fileHandler.loadLog();
+        File cur = fileHandler.getFile(rootDirectory);
+        Deque<File> queue = new ArrayDeque<>();
+
+        // -------------------------------
+
+        queue.add(cur);
+        while(!queue.isEmpty()) {
+            if(fileHandler.isDirectory(cur.toPath())) {
+                if(seriesLog.contains(cur.getName())) {
+                    library.addToSeries(cur.getName(), file);
                 }
+                File[] files = fileHandler.getFiles(cur.toPath());
+                for(File file : files) {
+                    queue.add(file);
+                }
+            } else {
+
+            }
         }
+    }*/
+
+    final private class FileNode {
+        public File parent;
     }
+
+
 }

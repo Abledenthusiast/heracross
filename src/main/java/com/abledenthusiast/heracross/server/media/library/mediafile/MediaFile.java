@@ -5,19 +5,34 @@ import java.nio.file.Path;
 import javax.naming.OperationNotSupportedException;
 
 public interface MediaFile {
-    public enum MediaFileType {
-        TVSeries,
-        Movie,
+    enum MediaFileType {
+        TVSeries("TV"),
+        Movie("Movie"),
+        ;
+
+        private final String dirName;
+
+        MediaFileType(String dirName) {
+            this.dirName = dirName;
+        }
+
+        public String getDirName() {
+            return dirName;
+        }
     }
 
-    public String getName();
+    String getName();
 
-    public int hashCode();
+    MediaFileType getMediaFileType();
 
-    public Path getFilePath();
+    @Override int hashCode();
 
-    public static MediaFile createMediaFile(Path rootDir, String name,
-                                             String contentType, MediaFileType mediaType)
+    Path getFilePath();
+
+    @Override String toString();
+
+    static MediaFile createMediaFile(Path rootDir, String name,
+                                     String contentType, MediaFileType mediaType)
             throws OperationNotSupportedException {
         switch(mediaType) {
             case TVSeries: {

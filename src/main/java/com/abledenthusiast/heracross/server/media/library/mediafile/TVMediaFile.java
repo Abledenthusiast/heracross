@@ -11,6 +11,8 @@ public class TVMediaFile implements SortableMedia<TVMediaFile>   {
     private Position position;
     private Path filePath;
 
+    public final MediaFileType mediaFileType = MediaFileType.TVSeries;
+
     public TVMediaFile(Path rootDir, String fileName, String contentType) {
         filePath = rootDir.resolve(fileName);
         this.contentType = contentType;
@@ -75,7 +77,12 @@ public class TVMediaFile implements SortableMedia<TVMediaFile>   {
 	public String getName() {
 		return name;
     }
-    
+
+    @Override
+    public MediaFileType getMediaFileType() {
+        return mediaFileType;
+    }
+
     public String getContentType() {
         return contentType;
     }
