@@ -27,16 +27,14 @@ public interface MediaFile {
 
     @Override int hashCode();
 
-    Path getFilePath();
-
     @Override String toString();
 
-    static MediaFile createMediaFile(Path rootDir, String name,
+    static MediaFile createMediaFile(String name,
                                      String contentType, MediaFileType mediaType)
             throws OperationNotSupportedException {
         switch(mediaType) {
             case TVSeries: {
-                return new TVMediaFile(rootDir, name, contentType);
+                return new TVMediaFile(name, contentType);
             }
             case Movie: {
                 throw new OperationNotSupportedException();

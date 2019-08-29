@@ -10,8 +10,12 @@ public interface Library <T extends MediaFile> {
     //public void add(T file);
     void addToSeries(T file, String seriesName);
 
-    Optional<T> getSeriesMember(String seriesName, int index);
-    //public T get(String mediaName);
+    Optional<LibraryNode> getSeriesMember(String seriesName, int index);
+
+    void addSingle(MediaFile mediaFile);
+
+    Optional<LibraryNode> getSingle(String fileName);
+
     boolean contains(String mediaName);
 
     void createSeries(MediaFile.MediaFileType fileType, String seriesName);

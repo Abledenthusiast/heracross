@@ -1,6 +1,5 @@
 package com.abledenthusiast.heracross.server.media.library;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -19,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.WatchService;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 
 public class MediaLibrary implements Library<MediaFile> {
@@ -40,8 +38,9 @@ public class MediaLibrary implements Library<MediaFile> {
     }
 
     @Override
-    public void addToSeries(MediaFile file, String seriesName) {
-        Path seriesDir = constructSeriesPath(file.getMediaFileType(), seriesName);
+    public void addToSeries(MediaFile mediaFile, String seriesName) {
+        /* verify the directory for this series has already been constructed */
+        Path seriesDir = constructSeriesPath(mediaFile.getMediaFileType(), seriesName);
         if(!Files.isDirectory(seriesDir)) {
             try {
                 Files.createDirectories(seriesDir);
@@ -50,16 +49,18 @@ public class MediaLibrary implements Library<MediaFile> {
                 e.printStackTrace();
 			}
         }
-        System.out.printf("adding series %s", seriesName);
+        System.out.printf("adding to series %s", seriesName);
         commitSeries(seriesName, seriesDir);
-        library.addToSeries(seriesName, file);
+
+        Path filePath = seriesDir.resolve(mediaFile.getName());
+        library.addToSeries(seriesName, new LibEntry(mediaFile, filePath));
     }
     
     public void addEntireSeries(String seriesName, List<? extends MediaFile> files) {
         Path seriesDir = constructSeriesPath(files.get(0).getMediaFileType(), seriesName);
-        commitSeries(seriesName, seriesDir);
         for(MediaFile file : files) {
-            library.addToSeries(seriesName, file);
+            Path filePath = seriesDir.resolve(file.getName());
+            library.addToSeries(seriesName, new LibEntry(file, filePath));
         }
     }
 
@@ -70,12 +71,23 @@ public class MediaLibrary implements Library<MediaFile> {
     }
 
     @Override
-    public Optional<MediaFile> getSeriesMember(String name, int index) {
-        List<MediaFile> series = library.getSeries(name);
+    public Optional<LibraryNode> getSeriesMember(String name, int index) {
+        List<LibraryNode> series = library.getSeries(name);
         if(series.size() > index) {
             return Optional.of(series.get(index));
         }
         return Optional.empty();
+    }
+
+    @Override
+    public void addSingle(MediaFile mediaFile) {
+        Path path = constructSinglePath(mediaFile);
+        library.addSingle(new LibEntry(mediaFile, path));
+    }
+
+    @Override
+    public Optional<LibraryNode> getSingle(String fileName) {
+        return library.getSingle(fileName);
     }
 
 
@@ -89,8 +101,8 @@ public class MediaLibrary implements Library<MediaFile> {
     }
 
     /* this may need to change for a specific impl */
-    public List<MediaFile> getEntireLibrary() {
-        List<MediaFile> complete = library.getEntireCollection();
+    public List<LibraryNode> getEntireLibrary() {
+        List<LibraryNode> complete = library.getEntireCollection();
         return complete;
     }
 
@@ -123,6 +135,7 @@ public class MediaLibrary implements Library<MediaFile> {
         }
     }
 
+
     private void createSeriesDir(Path seriesPath) {
         fileHandler.createDirectory(seriesPath);
     }
@@ -130,6 +143,11 @@ public class MediaLibrary implements Library<MediaFile> {
     @Override
     public Path constructSeriesPath(MediaFileType mediaType, String seriesName) {
         return rootDirectory.resolve(Path.of(mediaType.getDirName(), seriesName));
+    }
+
+    private Path constructSinglePath(MediaFile mediaFile) {
+        return rootDirectory.resolve(Path.of(mediaFile.getMediaFileType().getDirName(),
+                                            mediaFile.getName()));
     }
 
     public void initMediaTypeDirs() {
@@ -175,13 +193,13 @@ public class MediaLibrary implements Library<MediaFile> {
             MediaFileType mediaType = MediaFileType.valueOf(logTuple[3]);
             String seriesName = logTuple[4];
 
-            MediaFile mediaFile = MediaFile.createMediaFile(filePath, fileName,
+            MediaFile mediaFile = MediaFile.createMediaFile(fileName,
                     contentType, mediaType);
 
             if(!seriesName.equals("")) {
-                library.addToSeries(seriesName, mediaFile);
+                library.addToSeries(seriesName, new LibEntry(mediaFile, filePath));
             } else {
-                library.addSingle(mediaFile);
+                library.addSingle(new LibEntry(mediaFile, filePath));
             }
 
         }
@@ -217,6 +235,44 @@ public class MediaLibrary implements Library<MediaFile> {
 
     final private class FileNode {
         public File parent;
+    }
+
+    final private static class LibEntry implements LibraryNode {
+        private final MediaFile file;
+        private final Path path;
+
+        LibEntry(MediaFile file, Path path) {
+            this.file = file;
+            this.path = path;
+        }
+
+        @Override
+        public MediaFile file() {
+            return file;
+        }
+
+        @Override
+        public Path path() {
+            return path;
+        }
+
+        @Override
+        public boolean equals(Object var1) {
+            if(! (var1 instanceof LibEntry)) {
+                return false;
+            }
+            LibEntry otherEntry = (LibEntry) var1;
+            return file.equals(otherEntry.file) && path.equals(otherEntry.path);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = file.hashCode();
+            return 31 * result + path.hashCode();
+        }
+
+
+
     }
 
 

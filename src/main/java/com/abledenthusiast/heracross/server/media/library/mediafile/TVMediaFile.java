@@ -5,26 +5,18 @@ import java.nio.file.Path;
 //note: probably need to implement this differently. A TVMediaFile will likely be a better way to do this. 
 //note: a private static class inside series may suffice.
 public class TVMediaFile implements SortableMedia<TVMediaFile>   {
-    private String seriesName;
     private String name;
     private String contentType;
     private Position position;
-    private Path filePath;
 
     public final MediaFileType mediaFileType = MediaFileType.TVSeries;
 
-    public TVMediaFile(Path rootDir, String fileName, String contentType) {
-        filePath = rootDir.resolve(fileName);
+    public TVMediaFile(String fileName, String contentType) {
         this.contentType = contentType;
     }
     
-    public static TVMediaFile createMediaFile(Path rootDir, String fileName, String contentType) {
-        return new TVMediaFile(rootDir, fileName, contentType);
-    }
-
-    @Override
-    public Path getFilePath() {
-        return filePath;
+    public static TVMediaFile createMediaFile(String fileName, String contentType) {
+        return new TVMediaFile(fileName, contentType);
     }
 
     public Position getPosition() {
@@ -44,11 +36,9 @@ public class TVMediaFile implements SortableMedia<TVMediaFile>   {
 
     @Override
     public int hashCode() {
-        int result = seriesName.hashCode();
-        result = 31 * result + name.hashCode();
+        int result = name.hashCode();
         result = 31 * result + contentType.hashCode();
-        result = 31 * result + position.hashCode();
-        return 31 * result + filePath.hashCode();
+        return 31 * result + position.hashCode();
     }
 
     @Override
