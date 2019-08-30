@@ -23,6 +23,7 @@ import com.abledenthusiast.heracross.HeracrossProperties;
 import com.abledenthusiast.heracross.server.fileservice.FileHandler;
 import com.abledenthusiast.heracross.server.fileservice.FileHandlerLocal;
 import com.abledenthusiast.heracross.server.media.library.Library;
+import com.abledenthusiast.heracross.server.media.library.LibraryNode;
 import com.abledenthusiast.heracross.server.media.library.MediaLibrary;
 import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile;
 import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile.MediaFileType;
@@ -38,11 +39,10 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 public class Heracross {
 
-    private static final String template = "Hello, %s!";
     private final AtomicLong counter = new AtomicLong();
     private HeracrossProperties properties;
     //TODO: remove filehandler reference
-    private FileHandler<MultipartFile> fileHandler;
+    private FileHandler fileHandler;
     private HeracrossController controller;
 
     public Heracross() {
@@ -64,29 +64,20 @@ public class Heracross {
         return properties.getVersion();
     }
 
-
-    // maybe add a temperature service to have near the player
-    // this can be outside and inside
-    @GetMapping(path = "/weather/currentTemp")
-    public List<String> weather() {
-        List<String> topStories = Arrays.asList("StoryA", "StoryB");
-        
-        //
-
-        return topStories;
-    }
-
-    @PostMapping("debug/uploadFile")
-    public String uploadFileDebug(@RequestParam("file") MultipartFile file) {
-        boolean res = fileHandler.writeFile(file);
-        return Boolean.toString(res);
-    }
-
     @PostMapping("/upload/series/{seriesName}")
     public String createSeries(@PathVariable("seriesName") String seriesName) {
         //FIXME: change to possible enum for actual reason creation failed
         boolean res = controller.createSeries(seriesName);
         return String.valueOf(res);
+    }
+
+    @PostMapping("/upload/movie/{movieName}")
+    public void uploadMovie(@RequestParam("file") MultipartFile file,
+                              @PathVariable("movieName") String movieName,
+                              HttpServletResponse response) {
+        //FIXME: change to possible enum for actual reason creation failed
+        controller.addSingle(file, movieName, MediaFileType.Movie);
+        response.setStatus(201);
     }
 
     @PostMapping("/upload/tv/{seriesName}")
@@ -101,11 +92,11 @@ public class Heracross {
     public void getSeriesFile(@PathVariable("episode") int episode,
                                  @PathVariable("seriesName") String seriesName,
                                   HttpServletResponse response) {
-        Path filePath = controller.getSeriesMember(seriesName, episode);
+        LibraryNode libNode = controller.getSeriesMember(seriesName, episode);
         try {
             OutputStream outStream = response.getOutputStream();
-            response.setContentType(Files.probeContentType(filePath));
-            Files.copy(filePath, outStream);
+            response.setContentType(libNode.file().contentType());
+            Files.copy(libNode.path(), outStream);
             response.flushBuffer();
             outStream.close();
         } catch (Exception e) {
@@ -113,10 +104,15 @@ public class Heracross {
         }
     }
 
-    @GetMapping(value="/debug/getFile/{file}", produces = "video/mp4")
-     public void getfile(@PathVariable("file") String fileName, HttpServletResponse response) {
+    @GetMapping(value="/getFile/movie/{file}")
+     public void getMovie(@PathVariable("file") String fileName, HttpServletResponse response) {
+        LibraryNode libNode = controller.getSingle(fileName);
         try {
-
+            OutputStream outStream = response.getOutputStream();
+            response.setContentType(libNode.file().contentType());
+            Files.copy(libNode.path(), outStream);
+            response.flushBuffer();
+            outStream.close();
         } catch (Exception e) {
 
         }
@@ -127,8 +123,6 @@ public class Heracross {
         try {
             OutputStream outStream = response.getOutputStream();
             response.setContentType("text/plain");
-            // very temporary
-            // Path temp = new TVMediaFile(properties.getDefaultPath(), "cat.mp4").getPath();
             Arrays.asList(properties.getProjectRoot().toFile().listFiles()).stream()
             .map(file -> file.toPath())
             .map(Heracross::probeContentType)

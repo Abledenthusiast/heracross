@@ -9,6 +9,7 @@ import java.util.Optional;
 import com.abledenthusiast.heracross.server.fileservice.FileHandler;
 import com.abledenthusiast.heracross.server.fileservice.FileHandlerLocal;
 import com.abledenthusiast.heracross.server.media.library.Library;
+import com.abledenthusiast.heracross.server.media.library.LibraryNode;
 import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile;
 import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile.MediaFileType;
 
@@ -49,10 +50,20 @@ public class HeracrossController {
         return createSeriesTV(seriesName);
     }
 
-    public Path getSeriesMember(String seriesName, int index) {
-        Optional<MediaFile> file = library.getSeriesMember(seriesName, index - 1);
-        if (file.isPresent()) {
-            return file.get().getFilePath();
+    public LibraryNode getSeriesMember(String seriesName, int index) {
+        Optional<LibraryNode> libNode = library.getSeriesMember(seriesName, index - 1);
+        if (libNode.isPresent()) {
+            return libNode.get();
+        }
+        System.out.println(library.getEntireLibrary().toString());
+        throw new HttpServerErrorException(HttpStatus.NOT_FOUND,
+        "No item found at index");
+    }
+
+    public LibraryNode getSingle(String fileName) {
+        Optional<LibraryNode> libNode = library.getSingle(fileName);
+        if (libNode.isPresent()) {
+            return libNode.get();
         }
         System.out.println(library.getEntireLibrary().toString());
         throw new HttpServerErrorException(HttpStatus.NOT_FOUND,
@@ -61,12 +72,23 @@ public class HeracrossController {
 
     public <T extends MultipartFile> void addSeriesFile(T file, String seriesName, MediaFileType mediaType) {
         try {
-            MediaFile mediaFile = MediaFile.createMediaFile(library.constructSeriesPath(mediaType, seriesName), file.getOriginalFilename(),
+            MediaFile mediaFile = MediaFile.createMediaFile(file.getOriginalFilename(),
                                 file.getContentType(), mediaType);
-            library.addToSeries(mediaFile, seriesName);
-            Files.copy(file.getInputStream(), mediaFile.getFilePath(), StandardCopyOption.REPLACE_EXISTING);
+            library.addToSeries(file.getInputStream(), mediaFile, seriesName);
         } catch (Exception err) {
             System.out.printf("Hit exception while adding file to library %s %s", err, seriesName);
+            throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR,
+                                                "Error while adding file to library");
+        }
+    }
+
+    public <T extends MultipartFile> void addSingle(T file, String movieName, MediaFileType mediaType) {
+        try {
+            MediaFile mediaFile = MediaFile.createMediaFile(file.getOriginalFilename(),
+                                file.getContentType(), mediaType);
+            library.addSingle(file.getInputStream(), mediaFile);
+        } catch (Exception err) {
+            System.out.printf("Hit exception while adding file to library %s %s", err, movieName);
             throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR,
                                                 "Error while adding file to library");
         }

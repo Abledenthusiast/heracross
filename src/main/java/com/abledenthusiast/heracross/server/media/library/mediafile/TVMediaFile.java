@@ -77,4 +77,9 @@ public class TVMediaFile implements SortableMedia<TVMediaFile>   {
         return contentType;
     }
 
+    @Override
+    public String contentType() {
+        return contentType;
+    }
+
 }

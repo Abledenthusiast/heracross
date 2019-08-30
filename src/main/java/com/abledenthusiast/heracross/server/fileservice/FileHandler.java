@@ -2,12 +2,13 @@ package com.abledenthusiast.heracross.server.fileservice;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Set;
 
-public interface FileHandler<T> {
+public interface FileHandler {
 
-    boolean writeFile(T file);
+    boolean writeFile(InputStream in, Path targetLocation);
 
     boolean createDirectory(Path directory);
 

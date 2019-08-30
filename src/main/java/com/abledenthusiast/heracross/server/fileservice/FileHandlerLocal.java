@@ -22,7 +22,7 @@ import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile.Me
 
 import org.springframework.web.multipart.MultipartFile;
 
-public class FileHandlerLocal implements FileHandler<MultipartFile> {
+public class FileHandlerLocal implements FileHandler {
     private final static String LOG_FILE = "series.log";
     private Path defaultDir;
     private HashMap<String, String> hashMap;
@@ -34,14 +34,13 @@ public class FileHandlerLocal implements FileHandler<MultipartFile> {
     
 
     @Override
-    public boolean writeFile(MultipartFile file) {
-        System.out.print("made it here.");
-        Objects.requireNonNull(file);
+    public boolean writeFile(InputStream in, Path targetLocation) {
+        Objects.requireNonNull(in);
+        Objects.requireNonNull(targetLocation);
         boolean result = false;
-        Path targetLocation = defaultDir.resolve(file.getOriginalFilename());
 
         try {
-            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(in, targetLocation, StandardCopyOption.REPLACE_EXISTING);
             result = true;
         } catch (Exception e) {
             System.out.printf("error when writing file %s", e);

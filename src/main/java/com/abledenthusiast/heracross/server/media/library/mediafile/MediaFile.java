@@ -25,9 +25,12 @@ public interface MediaFile {
 
     MediaFileType getMediaFileType();
 
+    String contentType();
+
     @Override int hashCode();
 
     @Override String toString();
+
 
     static MediaFile createMediaFile(String name,
                                      String contentType, MediaFileType mediaType)

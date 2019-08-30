@@ -13,6 +13,7 @@ import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile.Me
 import javax.naming.OperationNotSupportedException;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,12 +24,12 @@ import java.util.Deque;
 public class MediaLibrary implements Library<MediaFile> {
     private MediaCollection library;
     private Path rootDirectory;
-    private FileHandler<?> fileHandler;
+    private FileHandler fileHandler;
     private WatchService watchService;
     private ScheduledThreadPoolExecutor curators;
 
 
-    public MediaLibrary(Path rootDirectory, FileHandler<?> fileHandler) {
+    public MediaLibrary(Path rootDirectory, FileHandler fileHandler) {
         curators = new ScheduledThreadPoolExecutor(10);
         watchService = initWatcher();
         library = new MediaCollection();
@@ -38,7 +39,7 @@ public class MediaLibrary implements Library<MediaFile> {
     }
 
     @Override
-    public void addToSeries(MediaFile mediaFile, String seriesName) {
+    public void addToSeries(InputStream in, MediaFile mediaFile, String seriesName) {
         /* verify the directory for this series has already been constructed */
         Path seriesDir = constructSeriesPath(mediaFile.getMediaFileType(), seriesName);
         if(!Files.isDirectory(seriesDir)) {
@@ -54,6 +55,8 @@ public class MediaLibrary implements Library<MediaFile> {
 
         Path filePath = seriesDir.resolve(mediaFile.getName());
         library.addToSeries(seriesName, new LibEntry(mediaFile, filePath));
+        /* Time to actually persist the file to whatever file store e.g. local file system, gcp, aws, azure */
+        fileHandler.writeFile(in, filePath);
     }
     
     public void addEntireSeries(String seriesName, List<? extends MediaFile> files) {
@@ -80,9 +83,10 @@ public class MediaLibrary implements Library<MediaFile> {
     }
 
     @Override
-    public void addSingle(MediaFile mediaFile) {
+    public void addSingle(InputStream in, MediaFile mediaFile) {
         Path path = constructSinglePath(mediaFile);
         library.addSingle(new LibEntry(mediaFile, path));
+        fileHandler.writeFile(in, path);
     }
 
     @Override
