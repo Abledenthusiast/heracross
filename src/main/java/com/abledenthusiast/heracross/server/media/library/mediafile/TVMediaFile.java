@@ -11,7 +11,9 @@ public class TVMediaFile implements SortableMedia<TVMediaFile>   {
 
     public final MediaFileType mediaFileType = MediaFileType.TVSeries;
 
-    public TVMediaFile(String fileName, String contentType) {
+    public TVMediaFile(String fileName, String contentType)
+    {
+        this.name = fileName;
         this.contentType = contentType;
     }
     

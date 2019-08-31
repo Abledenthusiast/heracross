@@ -97,8 +97,12 @@ public class FileHandlerLocal implements FileHandler {
 
     @Override
     public boolean createDirectory(Path directory) {
+        if(Files.isDirectory(directory)) {
+            return true;
+        }
         try {
-            Files.createDirectories(defaultDir.resolve(directory));
+            Files.createDirectories(directory);
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
         }

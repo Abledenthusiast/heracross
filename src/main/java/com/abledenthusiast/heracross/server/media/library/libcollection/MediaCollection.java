@@ -63,7 +63,7 @@ public class MediaCollection {
     }
 
     public Optional<LibraryNode> getSingle(String fileName) {
-        return Optional.of(singles.get(fileName));
+        return Optional.ofNullable(singles.get(fileName));
     }
 
     /* merge the maps... there's probably a better way to do this via streams */

@@ -7,5 +7,6 @@ import java.nio.file.Path;
 public interface LibraryNode {
     MediaFile file();
     Path path();
+    @Override
     boolean equals(Object var1);
 }

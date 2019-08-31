@@ -76,7 +76,9 @@ public class HeracrossController {
                                 file.getContentType(), mediaType);
             library.addToSeries(file.getInputStream(), mediaFile, seriesName);
         } catch (Exception err) {
+            err.printStackTrace();
             System.out.printf("Hit exception while adding file to library %s %s", err, seriesName);
+            System.out.println();
             throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR,
                                                 "Error while adding file to library");
         }
@@ -88,6 +90,7 @@ public class HeracrossController {
                                 file.getContentType(), mediaType);
             library.addSingle(file.getInputStream(), mediaFile);
         } catch (Exception err) {
+            err.printStackTrace();
             System.out.printf("Hit exception while adding file to library %s %s", err, movieName);
             throw new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR,
                                                 "Error while adding file to library");

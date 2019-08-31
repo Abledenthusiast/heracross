@@ -31,31 +31,33 @@ public class MediaLibrary implements Library<MediaFile> {
 
     public MediaLibrary(Path rootDirectory, FileHandler fileHandler) {
         curators = new ScheduledThreadPoolExecutor(10);
-        watchService = initWatcher();
         library = new MediaCollection();
         this.fileHandler = fileHandler;
         this.rootDirectory = rootDirectory;
-        initLibrary();
+        //initLibrary();
     }
 
     @Override
     public void addToSeries(InputStream in, MediaFile mediaFile, String seriesName) {
         /* verify the directory for this series has already been constructed */
         Path seriesDir = constructSeriesPath(mediaFile.getMediaFileType(), seriesName);
-        if(!Files.isDirectory(seriesDir)) {
-            try {
-                Files.createDirectories(seriesDir);
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-			}
+        if(library.getSeries(seriesName) == null) {
+            System.out.println("series was not found in collection, attempting to create the series");
+            if(Files.isDirectory(seriesDir)) {
+                try {
+                    Files.createDirectories(seriesDir);
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
         }
         System.out.printf("adding to series %s", seriesName);
         commitSeries(seriesName, seriesDir);
 
         Path filePath = seriesDir.resolve(mediaFile.getName());
         library.addToSeries(seriesName, new LibEntry(mediaFile, filePath));
-        /* Time to actually persist the file to whatever file store e.g. local file system, gcp, aws, azure */
+        /* Time to actually persist the file to the file store e.g. local file system, gcp, aws, azure */
         fileHandler.writeFile(in, filePath);
     }
     

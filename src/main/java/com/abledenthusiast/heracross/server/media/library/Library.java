@@ -9,6 +9,13 @@ import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile;
 
 public interface Library <T extends MediaFile> {
     //public void add(T file);
+
+    /*
+    * Adds a new file to a series
+    * The media type of the Mediafile dictates under which directory the series will be created
+    * e.g tv/
+    *
+     */
     void addToSeries(InputStream in, T file, String seriesName);
 
     Optional<LibraryNode> getSeriesMember(String seriesName, int index);
