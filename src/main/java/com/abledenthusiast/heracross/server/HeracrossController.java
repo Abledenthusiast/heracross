@@ -3,11 +3,7 @@ package com.abledenthusiast.heracross.server;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Optional;
-
-import com.abledenthusiast.heracross.server.fileservice.FileHandler;
-import com.abledenthusiast.heracross.server.fileservice.FileHandlerLocal;
 import com.abledenthusiast.heracross.server.media.library.Library;
 import com.abledenthusiast.heracross.server.media.library.LibraryNode;
 import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile;
@@ -26,28 +22,12 @@ import org.springframework.web.multipart.MultipartFile;
 public class HeracrossController {
 
     private Library<MediaFile> library;
-    private FileHandler fileHandler;
     private Path projectRoot;
     
     
     public HeracrossController(Path projectRoot, Library<MediaFile> library) {
         this.library = library;
         this.projectRoot = projectRoot;
-        fileHandler = new FileHandlerLocal(projectRoot);
-    }
-
-
-    /*
-    * creates a new directory for a series if the series does not already exist.
-    * this will normalize the seriesName to all lower case, so if ths is not the
-    * desired behavior, this should be extended in same way to handle that case.
-    */
-    public boolean createSeries(String seriesName) {
-        seriesName = seriesName.toLowerCase();
-        if(library.contains(seriesName)) {
-            return false;
-        }
-        return createSeriesTV(seriesName);
     }
 
     public LibraryNode getSeriesMember(String seriesName, int index) {
@@ -86,7 +66,7 @@ public class HeracrossController {
 
     public <T extends MultipartFile> void addSingle(T file, String movieName, MediaFileType mediaType) {
         try {
-            MediaFile mediaFile = MediaFile.createMediaFile(file.getOriginalFilename(),
+            MediaFile mediaFile = MediaFile.createMediaFile(movieName,
                                 file.getContentType(), mediaType);
             library.addSingle(file.getInputStream(), mediaFile);
         } catch (Exception err) {
@@ -104,10 +84,23 @@ public class HeracrossController {
      * this will normalize the seriesName to all lower case, so if ths is not the
      * desired behavior, this should be extended in same way to handle that case.
      */
-    public boolean createSeriesTV(String seriesName) {
+    public boolean createTVSeries(String seriesName) {
         //TODO: move to the fileHandler. this will need to be more generic
-        library.createSeries( MediaFileType.TVSeries, seriesName);
+        library.createSeries( MediaFileType.TVSeries, seriesName.toLowerCase());
         return true;
     }
+
+    /*
+     * creates a new directory for a series if the series does not already exist.
+     * this will normalize the seriesName to all lower case, so if ths is not the
+     * desired behavior, this should be extended in same way to handle that case.
+     */
+    public boolean createMovieSeries(String seriesName) {
+        //TODO: move to the fileHandler. this will need to be more generic
+        library.createSeries( MediaFileType.Movie, seriesName.toLowerCase());
+        return true;
+    }
+
+    
 
 }

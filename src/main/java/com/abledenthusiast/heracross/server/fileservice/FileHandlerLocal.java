@@ -37,8 +37,9 @@ public class FileHandlerLocal implements FileHandler {
     public boolean writeFile(InputStream in, Path targetLocation) {
         Objects.requireNonNull(in);
         Objects.requireNonNull(targetLocation);
+        
         boolean result = false;
-
+        createDirectory(targetLocation);
         try {
             Files.copy(in, targetLocation, StandardCopyOption.REPLACE_EXISTING);
             result = true;

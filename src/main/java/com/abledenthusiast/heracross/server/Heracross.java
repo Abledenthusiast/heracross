@@ -11,23 +11,19 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.abledenthusiast.heracross.HeracrossProperties;
+import com.abledenthusiast.heracross.HeracrossConfig;
 import com.abledenthusiast.heracross.server.fileservice.FileHandler;
 import com.abledenthusiast.heracross.server.fileservice.FileHandlerLocal;
-import com.abledenthusiast.heracross.server.media.library.Library;
 import com.abledenthusiast.heracross.server.media.library.LibraryNode;
 import com.abledenthusiast.heracross.server.media.library.MediaLibrary;
-import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile;
 import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile.MediaFileType;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,35 +35,40 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 public class Heracross {
 
-    private final AtomicLong counter = new AtomicLong();
-    private HeracrossProperties properties;
-    //TODO: remove filehandler reference
-    private FileHandler fileHandler;
+    private HeracrossConfig config;
     private HeracrossController controller;
 
     public Heracross() {
-        properties = new HeracrossProperties();
-        fileHandler = new FileHandlerLocal(properties.getProjectRoot());
-        controller = new HeracrossController(properties.getProjectRoot(), new MediaLibrary(
-            properties.getProjectRoot(), fileHandler
-        ));
+        config = new HeracrossConfig();
+        controller = new HeracrossController(config.getProjectRoot(),
+            new MediaLibrary(
+                config.getProjectRoot(), new FileHandlerLocal(config.getProjectRoot())
+            )
+        );
     }
 
     @GetMapping(path = "/ping")
-    public String ping() {
-        properties.getProjectRoot();
-        return properties.getProjectRoot().toString();
+    public String ping(HttpServletResponse response) {
+        response.setStatus(HttpStatus.OK.value());
+        return HttpStatus.OK.name();
     }
 
     @GetMapping(path = "/version")
     public String version() {
-        return properties.getVersion();
+        return config.getVersion();
     }
 
-    @PostMapping("/upload/series/{seriesName}")
-    public String createSeries(@PathVariable("seriesName") String seriesName) {
+    @PostMapping("/upload/series/tv/{seriesName}")
+    public String createTVSeries(@PathVariable("seriesName") String seriesName) {
         //FIXME: change to possible enum for actual reason creation failed
-        boolean res = controller.createSeries(seriesName);
+        boolean res = controller.createTVSeries(seriesName);
+        return String.valueOf(res);
+    }
+
+    @PostMapping("/upload/series/movie/{seriesName}")
+    public String createMovieSeries(@PathVariable("seriesName") String seriesName) {
+        //FIXME: change to possible enum for actual reason creation failed
+        boolean res = controller.createMovieSeries(seriesName);
         return String.valueOf(res);
     }
 
@@ -88,14 +89,15 @@ public class Heracross {
         response.setStatus(201);
     }
 
-    @GetMapping("/getFile/tv/{seriesName}/{episode}")
-    public void getSeriesFile(@PathVariable("episode") int episode,
+    @GetMapping("/tv/{seriesName}/{episode}")
+    public void getTVSeriesFile(@PathVariable("episode") int episode,
                                  @PathVariable("seriesName") String seriesName,
                                   HttpServletResponse response) {
         LibraryNode libNode = controller.getSeriesMember(seriesName, episode);
         try {
             OutputStream outStream = response.getOutputStream();
             response.setContentType(libNode.file().contentType());
+            System.out.println(Files.probeContentType(libNode.path()));
             Files.copy(libNode.path(), outStream);
             response.flushBuffer();
             outStream.close();
@@ -104,7 +106,7 @@ public class Heracross {
         }
     }
 
-    @GetMapping(value="/getFile/movie/{file}")
+    @GetMapping(value="/movies/{file}")
      public void getMovie(@PathVariable("file") String fileName, HttpServletResponse response) {
         LibraryNode libNode = controller.getSingle(fileName);
         try {
@@ -118,41 +120,20 @@ public class Heracross {
         }
     }
 
-    @GetMapping(value="/debug/getFile/all")
-     public void getfile(HttpServletRequest request,HttpServletResponse response) throws IOException {
+    @GetMapping("/movies/{seriesName}/{episode}")
+    public void getMovieSeriesFile(@PathVariable("episode") int episode,
+                                 @PathVariable("seriesName") String seriesName,
+                                  HttpServletResponse response) {
+        LibraryNode libNode = controller.getSeriesMember(seriesName, episode);
         try {
             OutputStream outStream = response.getOutputStream();
-            response.setContentType("text/plain");
-            Arrays.asList(properties.getProjectRoot().toFile().listFiles()).stream()
-            .map(file -> file.toPath())
-            .map(Heracross::probeContentType)
-            .forEach(str -> {
-                        try {
-                            str = str + ", ";
-                            outStream.write(str.getBytes());
-                        } catch (IOException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
-                        }
-                    });
-            // Files.copy(temp, outStream);
-            // Files.probeContentType(temp);
+            response.setContentType(libNode.file().contentType());
+            Files.copy(libNode.path(), outStream);
             response.flushBuffer();
             outStream.close();
         } catch (Exception e) {
 
         }
-    }
-
-
-    private static String probeContentType(Path path) {
-        String result = "";
-        try {
-            result = Files.probeContentType(path);
-        } catch(Exception e) {
-            System.out.println("error while probing");
-        }
-        return result;
     }
 
 }

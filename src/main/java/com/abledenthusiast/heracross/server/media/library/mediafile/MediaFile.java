@@ -7,7 +7,7 @@ import javax.naming.OperationNotSupportedException;
 public interface MediaFile {
     enum MediaFileType {
         TVSeries("TV"),
-        Movie("Movie"),
+        Movie("Movie")
         ;
 
         private final String dirName;
@@ -40,7 +40,7 @@ public interface MediaFile {
                 return new TVMediaFile(name, contentType);
             }
             case Movie: {
-                throw new OperationNotSupportedException();
+                return new MovieMediaFile(name, contentType);
             }
             default: {
                 throw new OperationNotSupportedException();

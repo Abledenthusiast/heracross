@@ -20,7 +20,7 @@ public interface Library <T extends MediaFile> {
 
     Optional<LibraryNode> getSeriesMember(String seriesName, int index);
 
-    void addSingle(InputStream in, MediaFile mediaFile) ;
+    void addSingle(InputStream in, MediaFile mediaFile);
 
     Optional<LibraryNode> getSingle(String fileName);
 
