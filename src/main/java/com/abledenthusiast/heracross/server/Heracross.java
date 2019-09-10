@@ -1,6 +1,5 @@
 package com.abledenthusiast.heracross.server;
 
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileReader;
@@ -12,17 +11,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.abledenthusiast.heracross.HeracrossConfig;
+import com.abledenthusiast.heracross.HeracrossProperties;
 import com.abledenthusiast.heracross.server.fileservice.FileHandler;
 import com.abledenthusiast.heracross.server.fileservice.FileHandlerLocal;
 import com.abledenthusiast.heracross.server.media.library.LibraryNode;
 import com.abledenthusiast.heracross.server.media.library.MediaLibrary;
 import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile.MediaFileType;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,17 +36,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 public class Heracross {
-
+    @Autowired
     private HeracrossConfig config;
+    @Autowired
     private HeracrossController controller;
 
     public Heracross() {
-        config = new HeracrossConfig();
-        controller = new HeracrossController(config.getProjectRoot(),
-            new MediaLibrary(
-                config.getProjectRoot(), new FileHandlerLocal(config.getProjectRoot())
-            )
-        );
     }
 
     @GetMapping(path = "/ping")
