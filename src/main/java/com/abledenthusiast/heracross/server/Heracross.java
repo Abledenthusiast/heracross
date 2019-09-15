@@ -1,32 +1,16 @@
 package com.abledenthusiast.heracross.server;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.http.HttpResponse;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
 
-import javax.annotation.PostConstruct;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.abledenthusiast.heracross.HeracrossConfig;
-import com.abledenthusiast.heracross.HeracrossProperties;
-import com.abledenthusiast.heracross.server.fileservice.FileHandler;
-import com.abledenthusiast.heracross.server.fileservice.FileHandlerLocal;
 import com.abledenthusiast.heracross.server.media.library.LibraryNode;
-import com.abledenthusiast.heracross.server.media.library.MediaLibrary;
 import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile.MediaFileType;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

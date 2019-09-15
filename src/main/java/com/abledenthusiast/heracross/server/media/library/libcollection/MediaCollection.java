@@ -10,7 +10,6 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import com.abledenthusiast.heracross.server.media.library.LibraryNode;
-import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile;
 
 
 public class MediaCollection {

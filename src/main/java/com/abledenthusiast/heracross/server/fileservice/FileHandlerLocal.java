@@ -1,51 +1,33 @@
 package com.abledenthusiast.heracross.server.fileservice;
 
-import java.io.BufferedWriter;
+import static com.abledenthusiast.heracross.server.fileservice.FileHandlerLocal.LibraryCol.CONTENT_TYPE;
+import static com.abledenthusiast.heracross.server.fileservice.FileHandlerLocal.LibraryCol.FILENAME;
+import static com.abledenthusiast.heracross.server.fileservice.FileHandlerLocal.LibraryCol.FILE_PATH;
+import static com.abledenthusiast.heracross.server.fileservice.FileHandlerLocal.LibraryCol.MEDIA_FILE_TYPE;
+import static com.abledenthusiast.heracross.server.fileservice.FileHandlerLocal.LibraryCol.SERIES_NAME;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.LongBinaryOperator;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
-import javax.naming.OperationNotSupportedException;
-import javax.print.attribute.standard.Media;
-
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+
+import javax.naming.OperationNotSupportedException;
 
 import com.abledenthusiast.heracross.server.fileservice.dto.MediaDTO;
-import com.abledenthusiast.heracross.server.media.library.Library;
-import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile;
 import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile.MediaFileType;
-import com.sun.net.httpserver.Authenticator.Result;
-
-import org.springframework.web.multipart.MultipartFile;
-
-import static com.abledenthusiast.heracross.server.fileservice.FileHandlerLocal.LibraryCol.*;
 
 public class FileHandlerLocal implements FileHandler {
   private Path defaultDir;

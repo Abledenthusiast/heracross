@@ -1,28 +1,23 @@
 package com.abledenthusiast.heracross.server.media.library;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-
-import com.abledenthusiast.heracross.server.fileservice.FileHandler;
-import com.abledenthusiast.heracross.server.fileservice.dto.MediaDTO;
-import com.abledenthusiast.heracross.server.media.library.libcollection.MediaCollection;
-import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile;
-import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile.MediaFileType;
-
-import javax.naming.OperationNotSupportedException;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.WatchService;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.function.Consumer;
+
+import javax.naming.OperationNotSupportedException;
+
+import com.abledenthusiast.heracross.server.fileservice.FileHandler;
+import com.abledenthusiast.heracross.server.fileservice.dto.MediaDTO;
+import com.abledenthusiast.heracross.server.media.library.libcollection.MediaCollection;
+import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile;
+import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile.MediaFileType;
 
 public class MediaLibrary implements Library<MediaFile> {
     private MediaCollection library;

@@ -1,16 +1,12 @@
 package com.abledenthusiast.heracross.server.fileservice;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
 
-import javax.print.attribute.standard.Media;
-
 import com.abledenthusiast.heracross.server.fileservice.dto.MediaDTO;
-import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile;
 
 public interface FileHandler {
 
