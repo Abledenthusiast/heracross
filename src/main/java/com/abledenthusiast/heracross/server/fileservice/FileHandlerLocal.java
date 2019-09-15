@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -44,6 +45,8 @@ import com.sun.net.httpserver.Authenticator.Result;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import static com.abledenthusiast.heracross.server.fileservice.FileHandlerLocal.LibraryCol.*;
+
 public class FileHandlerLocal implements FileHandler {
   private Path defaultDir;
   DbConnector db;
@@ -80,8 +83,11 @@ public class FileHandlerLocal implements FileHandler {
   public void initDirectory(Path dir) {
     try {
       Files.createDirectories(dir);
+    } catch(FileAlreadyExistsException ignore) {
+      //swallow, this doesn't matter.
     } catch (Exception e) {
       System.out.printf("error when creating directory %s", e);
+      System.out.println();
     }
   }
 
@@ -146,11 +152,11 @@ public class FileHandlerLocal implements FileHandler {
 
   @Override
   public void writeLog(MediaDTO dto) throws Exception {
-    db.insert.setString(LibraryCol.FileName.columnIndex(), dto.fileName());
-    db.insert.setString(LibraryCol.MediaFileType.columnIndex(), dto.mediaFileType().toString());
-    db.insert.setString(LibraryCol.FilePath.columnIndex(), dto.filePath().toString());
-    db.insert.setString(LibraryCol.SeriesName.columnIndex(), dto.seriesName().toString());
-    db.insert.setString(LibraryCol.ContentType.columnIndex(), dto.contentType().toString());
+    db.insert.setString(FILENAME.colIndex, dto.fileName());
+    db.insert.setString(MEDIA_FILE_TYPE.colIndex, dto.mediaFileType().toString());
+    db.insert.setString(FILE_PATH.colIndex, dto.filePath().toString());
+    db.insert.setString(SERIES_NAME.colIndex, dto.seriesName().toString());
+    db.insert.setString(CONTENT_TYPE.colIndex, dto.contentType().toString());
 
     db.insert.execute();
   }
@@ -192,11 +198,11 @@ public class FileHandlerLocal implements FileHandler {
       List<MediaDTO> media = new ArrayList<>();
       ResultSet results = selectAll.executeQuery();
       while (results.next()) {
-        String fileName = results.getString("FILE_NAME");
-        String mediaFileType = results.getString("MEDIA_FILE_TYPE");
-        String contentType = results.getString("CONTENT_TYPE");
-        String filePath = results.getString("FILE_PATH");
-        String seriesName = results.getString("SERIES_NAME");
+        String fileName = results.getString(FILENAME.colName);
+        String mediaFileType = results.getString(MEDIA_FILE_TYPE.colName);
+        String contentType = results.getString(CONTENT_TYPE.colName);
+        String filePath = results.getString(FILE_PATH.colName);
+        String seriesName = results.getString(SERIES_NAME.colName);
 
         MediaDTO dto = MediaDTO.newMediaDTOBuilder().filePath(Path.of(filePath)).fileName(fileName)
             .mediaFileType(MediaFileType.valueOf(mediaFileType))
@@ -245,21 +251,23 @@ public class FileHandlerLocal implements FileHandler {
     }
   }
 
-  private enum LibraryCol {
-    FileName(1),
-    MediaFileType(2),
-    FilePath(3),
-    SeriesName(4),
-    ContentType(5);
+  enum LibraryCol {
+    FILENAME(1, "FILE_NAME"),
+    MEDIA_FILE_TYPE(2, "MEDIA_FILE_TYPE"),
+    FILE_PATH(3, "FILE_PATH"),
+    SERIES_NAME(4, "SERIES_NAME"),
+    CONTENT_TYPE(5, "CONTENT_TYPE");
 
-    private final int value;
+    private final int colIndex;
+    private final String colName;
 
-    LibraryCol(int value) {
-      this.value = value;
+    LibraryCol(int colIndex, String colName) {
+      this.colIndex = colIndex;
+      this.colName = colName;
     }
 
     public int columnIndex() {
-      return value;
+      return colIndex;
     }
 
     

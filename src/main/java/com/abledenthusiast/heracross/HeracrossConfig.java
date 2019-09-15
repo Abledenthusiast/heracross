@@ -1,6 +1,7 @@
 package com.abledenthusiast.heracross;
 
 import java.io.File;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -43,8 +44,11 @@ public class HeracrossConfig {
         String root = getRoot();
         if (projectRoot == null) {
             projectRoot = Path.of(root, defaultPath).toAbsolutePath();
+            //TODO: move block to file handlers
             try {
                 Files.createDirectory(projectRoot);
+            } catch(FileAlreadyExistsException ignore) {
+                //ignored
             } catch (Exception exception) {
                 System.out.printf("Warn: while creating home directory for project ran into %s", exception);
             }

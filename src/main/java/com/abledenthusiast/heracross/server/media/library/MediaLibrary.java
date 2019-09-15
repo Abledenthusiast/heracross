@@ -74,13 +74,6 @@ public class MediaLibrary implements Library<MediaFile> {
             library.addToSeries(seriesName, new LibEntry(file, filePath));
         }
     }
-    
-    @Deprecated(forRemoval = true)
-    @Override
-    public void createSeries(MediaFileType mediaType, String seriesName) {
-        createSeriesDir(constructSeriesPath(mediaType, seriesName));
-        library.createSeries(seriesName);
-    }
 
     @Override
     public Optional<LibraryNode> getSeriesMember(String name, int index) {

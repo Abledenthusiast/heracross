@@ -85,8 +85,7 @@ public class HeracrossController {
      * desired behavior, this should be extended in same way to handle that case.
      */
     public boolean createTVSeries(String seriesName) {
-        //TODO: move to the fileHandler. this will need to be more generic
-        library.createSeries( MediaFileType.TVSeries, seriesName.toLowerCase());
+        //TODO: move to the fileHandler. this will need to be more generic    
         return true;
     }
 
@@ -97,7 +96,6 @@ public class HeracrossController {
      */
     public boolean createMovieSeries(String seriesName) {
         //TODO: move to the fileHandler. this will need to be more generic
-        library.createSeries( MediaFileType.Movie, seriesName.toLowerCase());
         return true;
     }
 
