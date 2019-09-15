@@ -74,7 +74,7 @@ public class MediaDTO {
       private String fileName;
       private MediaFileType mediaFileType;
       private String contentType;
-      private String seriesName;
+      private String seriesName = "";
 
       public MediaDTOBuilder filePath(Path filePath) {
         this.filePath = filePath;

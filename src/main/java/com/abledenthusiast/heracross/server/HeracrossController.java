@@ -30,7 +30,7 @@ public class HeracrossController {
         this.projectRoot = projectRoot;
     }
 
-    public LibraryNode getSeriesMember(String seriesName, int index) {
+    public LibraryNode getSeriesMember(String seriesName, int index) throws HttpServerErrorException {
         Optional<LibraryNode> libNode = library.getSeriesMember(seriesName, index - 1);
         if (libNode.isPresent()) {
             return libNode.get();
@@ -40,7 +40,7 @@ public class HeracrossController {
         "No item found at index");
     }
 
-    public LibraryNode getSingle(String fileName) {
+    public LibraryNode getSingle(String fileName) throws HttpServerErrorException {
         Optional<LibraryNode> libNode = library.getSingle(fileName);
         if (libNode.isPresent()) {
             return libNode.get();

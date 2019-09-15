@@ -119,6 +119,8 @@ public class FileHandlerLocal implements FileHandler {
     try {
       Files.createDirectories(directory);
       return true;
+    } catch(FileAlreadyExistsException ignore) {
+      //ignored
     } catch (IOException e) {
       e.printStackTrace();
     }
