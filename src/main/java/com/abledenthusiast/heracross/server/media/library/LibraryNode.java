@@ -9,4 +9,5 @@ public interface LibraryNode {
     Path path();
     @Override
     boolean equals(Object var1);
+    boolean commit();
 }

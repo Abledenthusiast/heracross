@@ -4,8 +4,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import com.abledenthusiast.heracross.server.fileservice.FileHandler;
+import com.abledenthusiast.heracross.server.fileservice.dto.MediaDTO;
 import com.abledenthusiast.heracross.server.media.library.libcollection.MediaCollection;
 import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile;
 import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile.MediaFileType;
@@ -28,22 +31,21 @@ public class MediaLibrary implements Library<MediaFile> {
     private WatchService watchService;
     private ScheduledThreadPoolExecutor curators;
 
-
     public MediaLibrary(Path rootDirectory, FileHandler fileHandler) {
         curators = new ScheduledThreadPoolExecutor(10);
         library = new MediaCollection();
         this.fileHandler = fileHandler;
         this.rootDirectory = rootDirectory;
-        //initLibrary();
+        initLibrary();
     }
 
     @Override
     public void addToSeries(InputStream in, MediaFile mediaFile, String seriesName) {
         /* verify the directory for this series has already been constructed */
         Path seriesDir = constructSeriesPath(mediaFile.getMediaFileType(), seriesName);
-        if(library.getSeries(seriesName) == null) {
+        if (library.getSeries(seriesName) == null) {
             System.out.println("series was not found in collection, attempting to create the series");
-            if(Files.isDirectory(seriesDir)) {
+            if (Files.isDirectory(seriesDir)) {
                 try {
                     Files.createDirectories(seriesDir);
                 } catch (IOException e) {
@@ -53,22 +55,27 @@ public class MediaLibrary implements Library<MediaFile> {
             }
         }
         System.out.printf("adding to series %s", seriesName);
-        commitSeries(seriesName, seriesDir);
 
         Path filePath = seriesDir.resolve(mediaFile.getName());
-        library.addToSeries(seriesName, new LibEntry(mediaFile, filePath));
-        /* Time to actually persist the file to the file store e.g. local file system, gcp, aws, azure */
+        addToSeries(seriesName, new LibEntry(mediaFile, filePath));
+
+
+        /*
+         * Time to actually persist the file to the file store e.g. local file system,
+         * gcp, aws, azure
+         */
         fileHandler.writeFile(in, filePath);
     }
-    
+
     public void addEntireSeries(String seriesName, List<? extends MediaFile> files) {
         Path seriesDir = constructSeriesPath(files.get(0).getMediaFileType(), seriesName);
-        for(MediaFile file : files) {
+        for (MediaFile file : files) {
             Path filePath = seriesDir.resolve(file.getName());
             library.addToSeries(seriesName, new LibEntry(file, filePath));
         }
     }
-
+    
+    @Deprecated(forRemoval = true)
     @Override
     public void createSeries(MediaFileType mediaType, String seriesName) {
         createSeriesDir(constructSeriesPath(mediaType, seriesName));
@@ -78,7 +85,7 @@ public class MediaLibrary implements Library<MediaFile> {
     @Override
     public Optional<LibraryNode> getSeriesMember(String name, int index) {
         List<LibraryNode> series = library.getSeries(name);
-        if(series.size() > index) {
+        if (series.size() > index) {
             return Optional.of(series.get(index));
         }
         return Optional.empty();
@@ -87,7 +94,7 @@ public class MediaLibrary implements Library<MediaFile> {
     @Override
     public void addSingle(InputStream in, MediaFile mediaFile) {
         Path path = constructSinglePath(mediaFile);
-        library.addSingle(new LibEntry(mediaFile, path));
+        addSingle(new LibEntry(mediaFile, path));
         fileHandler.writeFile(in, path);
     }
 
@@ -96,19 +103,17 @@ public class MediaLibrary implements Library<MediaFile> {
         return library.getSingle(fileName);
     }
 
-
     /*
-    *   Return true if the library contains a series or single instance of this name
-    */
+     * Return true if the library contains a series or single instance of this name
+     */
     public boolean contains(String name) {
-        
-        return library.getSeries(name).size() > 0 ||
-                library.getSingle(name).isPresent();
+
+        return library.getSeries(name).size() > 0 || library.getSingle(name).isPresent();
     }
 
     /* this may need to change for a specific impl */
     public List<LibraryNode> getEntireLibrary() {
-        List<LibraryNode> complete = library.getEntireCollection();
+        List<LibraryNode> complete = library.collectionAsList();
         return complete;
     }
 
@@ -116,31 +121,31 @@ public class MediaLibrary implements Library<MediaFile> {
         throw new UnsupportedOperationException("Operation currently not supported");
     }
 
-
     private WatchService initWatcher() {
         try {
             return FileSystems.getDefault().newWatchService();
-        } catch(Exception err) {
-            
+        } catch (Exception err) {
+
         }
         return null;
     }
 
     private void initLibrary() {
         /*
-        *   Check if project root has already been initialized.
-        *   If true, the library needs to be loaded from the files already made available
-        */
-        if(fileHandler.isDirectory(rootDirectory)) {
+         * Check if project root has already been initialized. If true, the library
+         * needs to be loaded from the files already made available
+         */
+        if (fileHandler.isDirectory(rootDirectory)) {
             // traverse directory tree and add files to collection
             try {
-                loadFromLog();
-            } catch (IOException | OperationNotSupportedException e) {
+                fileHandler.loadMedia(loader);
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
+    private Consumer<List<MediaDTO>> loader = (mediaFiles) -> loadFiles(mediaFiles);
 
     private void createSeriesDir(Path seriesPath) {
         fileHandler.createDirectory(seriesPath);
@@ -152,104 +157,63 @@ public class MediaLibrary implements Library<MediaFile> {
     }
 
     private Path constructSinglePath(MediaFile mediaFile) {
-        return rootDirectory.resolve(Path.of(mediaFile.getMediaFileType().getDirName(),
-                                            mediaFile.getName()));
+        return rootDirectory.resolve(Path.of(mediaFile.directoryName(), mediaFile.getName()));
     }
 
     public void initMediaTypeDirs() {
-        for(MediaFileType mfileType: MediaFileType.values()) {
+        for (MediaFileType mfileType : MediaFileType.values()) {
             fileHandler.createDirectory(rootDirectory.resolve(mfileType.getDirName()));
         }
     }
 
-    private void commitToLog(MediaFile file) {}
-
-    private void commitSeries(String seriesName, Path seriesPath) {
+    private void commitToLog(MediaDTO dto) {
         try {
-            fileHandler.writeLog(seriesName + ":" + seriesPath.toString());
-        } catch(Exception err) {
-
+            fileHandler.writeLog(dto);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
     }
 
+    private void commitSeries(String seriesName, LibraryNode entry) {
+        MediaFile file = entry.file();
+        MediaDTO dto = MediaDTO.newMediaDTOBuilder()
+                                .contentType(file.contentType())
+                                .fileName(file.getName())
+                                .filePath(entry.path())
+                                .mediaFileType(file.getMediaFileType())
+                                .seriesName(seriesName)
+                                .build();
 
-
-    /*
-    * This portion should rectify the commit log, library collections and the actual underlying file store
-    *
-    *
-    *
-    *
-     */
-    public void loadFromLog() throws IOException, OperationNotSupportedException {
-
-        Set<String> commitLog = fileHandler.loadLog();
-        File cur = fileHandler.getFile(rootDirectory);
-        Deque<File> queue = new ArrayDeque<>();
-
-        for (String line : commitLog) {
-            /* construct mediaFile from commitlog:
-            *   Tuple string will have the structure of: FILE_PATH:NAME:CONTENT_TYPE:MEDIA_FILE_TYPE:SERIES_NAME
-            */
-
-            String[] logTuple = line.split(":");
-            Path filePath = Path.of(logTuple[0]);
-            String fileName = logTuple[1];
-            String contentType = logTuple[2];
-            MediaFileType mediaType = MediaFileType.valueOf(logTuple[3]);
-            String seriesName = logTuple[4];
-
-            MediaFile mediaFile = MediaFile.createMediaFile(fileName,
-                    contentType, mediaType);
-
-            if(!seriesName.equals("")) {
-                library.addToSeries(seriesName, new LibEntry(mediaFile, filePath));
-            } else {
-                library.addSingle(new LibEntry(mediaFile, filePath));
-            }
-
-        }
-
-        // -------------------------------
-
+        commitToLog(dto); 
     }
 
-
-    /*private void rectifyCommitLog() throws IOException {
-
-        Set<String> seriesLog = fileHandler.loadLog();
-        File cur = fileHandler.getFile(rootDirectory);
-        Deque<File> queue = new ArrayDeque<>();
-
-        // -------------------------------
-
-        queue.add(cur);
-        while(!queue.isEmpty()) {
-            if(fileHandler.isDirectory(cur.toPath())) {
-                if(seriesLog.contains(cur.getName())) {
-                    library.addToSeries(cur.getName(), file);
-                }
-                File[] files = fileHandler.getFiles(cur.toPath());
-                for(File file : files) {
-                    queue.add(file);
-                }
-            } else {
-
-            }
-        }
-    }*/
-
-    final private class FileNode {
-        public File parent;
+    private void commitSingle(LibraryNode entry) {
+        MediaFile file = entry.file();
+        MediaDTO dto = MediaDTO.newMediaDTOBuilder()
+                                .contentType(file.contentType())
+                                .fileName(file.getName())
+                                .filePath(entry.path())
+                                .mediaFileType(file.getMediaFileType())
+                                .build();
+        commitToLog(dto); 
     }
 
     final private static class LibEntry implements LibraryNode {
         private final MediaFile file;
         private final Path path;
+        private final boolean commit;
 
         LibEntry(MediaFile file, Path path) {
             this.file = file;
             this.path = path;
+            this.commit = true;
+        }
+
+        LibEntry(MediaFile file, Path path, boolean commit) {
+            this.file = file;
+            this.path = path;
+            this.commit = commit;
         }
 
         @Override
@@ -263,6 +227,11 @@ public class MediaLibrary implements Library<MediaFile> {
         }
 
         @Override
+        public boolean commit() {
+            return commit;
+        }
+
+        @Override
         public boolean equals(Object var1) {
             if(! (var1 instanceof LibEntry)) {
                 return false;
@@ -272,13 +241,59 @@ public class MediaLibrary implements Library<MediaFile> {
         }
 
         @Override
+        public String toString() {
+            System.out.println();
+            System.out.println(file == null);
+            return file.contentType() + file.directoryName()  + file.getName() + " " + path.toString();
+        }
+
+        @Override
         public int hashCode() {
             int result = file.hashCode();
             return 31 * result + path.hashCode();
         }
 
+    }
 
 
+    /*
+    *
+    * Private use abstraction methods. 
+    * Any precondition checking should be done before calling these methods
+    */
+
+    private <T extends MediaDTO> void loadFiles(List<T> loadResults) {
+
+        for (MediaDTO dto : loadResults) {
+            MediaFile mFile = null;
+            try {
+                mFile = MediaFile.of(dto);
+            } catch (OperationNotSupportedException e) {
+                // TODO Auto-generated catch block
+                System.out.printf("Operation not supported for type %s, yet.", dto.mediaFileType());
+                continue;
+            }
+
+            if (dto.isSeries()) {
+                addToSeries(dto.seriesName(), new LibEntry(mFile, dto.filePath(), false));
+            } else {
+                addSingle(new LibEntry(mFile, dto.filePath(), false));
+            }
+        }
+    }
+
+    private void addSingle(LibraryNode entry) {
+        if(entry.commit()) {
+            commitSingle(entry);
+        }
+        library.addSingle(entry);
+    }
+
+    private void addToSeries(String seriesName, LibraryNode entry) {
+        if(entry.commit()) {
+            commitSeries(seriesName, entry);
+        }
+        library.addToSeries(seriesName, entry);
     }
 
 

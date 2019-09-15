@@ -4,7 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.Set;
+import java.util.List;
+import java.util.function.Consumer;
+
+import javax.print.attribute.standard.Media;
+
+import com.abledenthusiast.heracross.server.fileservice.dto.MediaDTO;
+import com.abledenthusiast.heracross.server.media.library.mediafile.MediaFile;
 
 public interface FileHandler {
 
@@ -18,8 +24,10 @@ public interface FileHandler {
 
     File[] getFiles(Path directory);
 
-    void writeLog(String logstr) throws IOException;
+    void writeLog(MediaDTO dto) throws Exception;
 
-    Set<String> loadLog() throws IOException;
+    List<MediaDTO> loadMedia() throws Exception;
+
+    void loadMedia(Consumer<List<MediaDTO>> loader) throws Exception;
 
 }

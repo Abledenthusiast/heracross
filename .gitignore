@@ -30,7 +30,6 @@ build/
 ### VS Code ###
 .vscode/
 
-
 # Compiled class file
 *.class
 
@@ -59,3 +58,6 @@ hs_err_pid*
 .DS_Store
 .AppleDouble
 .LSOverride
+
+#Embedded DB
+derbyDB/

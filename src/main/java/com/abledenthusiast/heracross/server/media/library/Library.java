@@ -26,6 +26,7 @@ public interface Library <T extends MediaFile> {
 
     boolean contains(String mediaName);
 
+    @Deprecated(forRemoval = true)
     void createSeries(MediaFile.MediaFileType fileType, String seriesName);
     
     List<?> getEntireLibrary();

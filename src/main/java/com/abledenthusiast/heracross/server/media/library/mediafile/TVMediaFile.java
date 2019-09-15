@@ -1,6 +1,5 @@
 package com.abledenthusiast.heracross.server.media.library.mediafile;
 
-import java.nio.file.Path;
 
 //note: probably need to implement this differently. A TVMediaFile will likely be a better way to do this. 
 //note: a private static class inside series may suffice.
@@ -82,6 +81,12 @@ public class TVMediaFile implements SortableMedia<TVMediaFile>   {
     @Override
     public String contentType() {
         return contentType;
+    }
+
+    @Override
+    public String directoryName() {
+        // TODO Auto-generated method stub
+        return mediaFileType.getDirName();
     }
 
 }

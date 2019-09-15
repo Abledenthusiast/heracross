@@ -67,7 +67,7 @@ public class MediaCollection {
     }
 
     /* merge the maps... there's probably a better way to do this via streams */
-    public List<LibraryNode> getEntireCollection() {
+    public List<LibraryNode> collectionAsList() {
         List<LibraryNode> collection = seriesCollection.values().stream().flatMap(
             list -> list.stream()
         ).collect(Collectors.toList());

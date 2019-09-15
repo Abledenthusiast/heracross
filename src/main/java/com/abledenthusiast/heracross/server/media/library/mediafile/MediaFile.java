@@ -1,14 +1,16 @@
 package com.abledenthusiast.heracross.server.media.library.mediafile;
 
 import java.nio.file.Path;
+import java.util.Objects;
 
 import javax.naming.OperationNotSupportedException;
+
+import com.abledenthusiast.heracross.server.fileservice.dto.MediaDTO;
 
 public interface MediaFile {
     enum MediaFileType {
         TVSeries("TV"),
-        Movie("Movie")
-        ;
+        Movie("Movie");
 
         private final String dirName;
 
@@ -31,6 +33,8 @@ public interface MediaFile {
 
     @Override String toString();
 
+    String directoryName();
+
 
     static MediaFile createMediaFile(String name,
                                      String contentType, MediaFileType mediaType)
@@ -47,5 +51,10 @@ public interface MediaFile {
             }
         }
         
+    }
+
+    static MediaFile of(MediaDTO dto) throws OperationNotSupportedException {
+        Objects.requireNonNull(dto);
+        return createMediaFile(dto.fileName(), dto.contentType(), dto.mediaFileType());
     }
 }
