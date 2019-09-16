@@ -6,6 +6,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.WatchService;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -126,14 +127,12 @@ public class MediaLibrary implements Library<MediaFile> {
         if (fileHandler.isDirectory(rootDirectory)) {
             // traverse directory tree and add files to collection
             try {
-                fileHandler.loadMedia(loader);
+                fileHandler.loadMedia(this::loadFiles);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
-
-    private Consumer<List<MediaDTO>> loader = (mediaFiles) -> loadFiles(mediaFiles);
 
     private void createSeriesDir(Path seriesPath) {
         fileHandler.createDirectory(seriesPath);
@@ -250,7 +249,7 @@ public class MediaLibrary implements Library<MediaFile> {
     * Any precondition checking should be done before calling these methods
     */
 
-    private <T extends MediaDTO> void loadFiles(List<T> loadResults) {
+    private void loadFiles(Collection<? extends MediaDTO> loadResults) {
 
         for (MediaDTO dto : loadResults) {
             MediaFile mFile = null;

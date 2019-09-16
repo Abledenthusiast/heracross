@@ -20,6 +20,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -125,14 +126,10 @@ public class FileHandlerLocal implements FileHandler {
   }
 
   @Override
-  public List<MediaDTO> loadMedia() throws Exception {
-    return db.selectAll();
+  public void loadMedia(Consumer<? super Collection<? extends MediaDTO>> loader) throws Exception {
+    db.selectAll(loader);
   }
   
-  public void loadMedia(Consumer<List<MediaDTO>> loader) throws Exception {
-    List<MediaDTO> loadedMedia = db.selectAll();
-    loader.accept(loadedMedia);
-  }
 
   @Override
   public void writeLog(MediaDTO dto) throws Exception {
@@ -178,7 +175,7 @@ public class FileHandlerLocal implements FileHandler {
       return DriverManager.getConnection(protocol + "/Users/abledenthusiast/Development/heracross/derbyDB;create=true");
     }
 
-    public List<MediaDTO> selectAll() throws SQLException, OperationNotSupportedException {
+    public void selectAll(Consumer<? super List<? extends MediaDTO>> loader) throws SQLException, OperationNotSupportedException {
       List<MediaDTO> media = new ArrayList<>();
       ResultSet results = selectAll.executeQuery();
       while (results.next()) {
@@ -195,7 +192,7 @@ public class FileHandlerLocal implements FileHandler {
             .build();
         media.add(dto);
       }
-      return media;
+      loader.accept(media);
     }
 
     public void close() throws SQLException {

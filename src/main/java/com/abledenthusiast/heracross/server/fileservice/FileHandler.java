@@ -3,6 +3,7 @@ package com.abledenthusiast.heracross.server.fileservice;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -22,8 +23,6 @@ public interface FileHandler {
 
     void writeLog(MediaDTO dto) throws Exception;
 
-    List<MediaDTO> loadMedia() throws Exception;
-
-    void loadMedia(Consumer<List<MediaDTO>> loader) throws Exception;
+    void loadMedia(Consumer<? super Collection<? extends MediaDTO>> loader) throws Exception;
 
 }
